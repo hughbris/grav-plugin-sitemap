@@ -158,7 +158,7 @@ class SitemapPlugin extends Plugin
                     if ($data = $route_data[$lang] ?? null) {
                         $entry = new SitemapEntry();
                         $entry->setData($data);
-                        if ($language->enabled()) {
+                        if ($language->enabled() && $this->multilang_enabled) {
                             foreach ($route_data as $l => $l_data) {
                                 $entry->addHreflangs(['hreflang' => $l, 'href' => $l_data['location']]);
                                 if ($include_default_lang === false && $l == $default_lang) {
