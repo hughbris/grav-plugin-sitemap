@@ -160,7 +160,9 @@ class SitemapPlugin extends Plugin
                         $entry->setData($data);
                         if ($language->enabled() && $this->multilang_enabled) {
                             foreach ($route_data as $l => $l_data) {
-                                $entry->addHreflangs(['hreflang' => $l, 'href' => $l_data['location']]);
+                                if($l != $lang) {
+                                    $entry->addHreflangs(['hreflang' => $l, 'href' => $l_data['location']]);
+                                }
                                 if ($include_default_lang === true && $l == $default_lang) {
                                     $entry->addHreflangs(['hreflang' => 'x-default', 'href' => $l_data['location']]);
                                 }
@@ -308,47 +310,47 @@ class SitemapPlugin extends Plugin
             if ($page->routable() && $page->published() && !$config_ignored && !$page_ignored) {
                 $page_languages = array_keys($page->translatedLanguages());
                 $include_lang = $this->multilang_skiplang_prefix !== $lang;
-                $location = $page->canonical($include_lang);
-                $url = $page->url(false, $include_lang);
+                if(in_array($lang, $page_languages)) {
+                    $location = $page->canonical($include_lang);
+                    $url = $page->url(false, $include_lang);
 
-                $lang_route = [
-                    'title' => $page->title(),
-                    'url' => $url,
-                    'route' => $route,
-                    'lang' => $lang,
-                    'translated' => in_array($lang, $page_languages),
-                    'location' => $location,
-                    'lastmod' => date($this->datetime_format, $page->date()),
-                    'longdate' => date('Y-m-d\TH:i:sP', $page->date()),
-                    'shortdate' => date('Y-m-d', $page->date()),
-                    'timestamp' => $page->date(),
-                    'rawroute' => $page->rawRoute(),
-                ];
+                    $lang_route = [
+                        'title' => $page->title(),
+                        'url' => $url,
+                        'route' => $route,
+                        'lang' => $lang,
+                        'translated' => TRUE,
+                        'location' => $location,
+                        'lastmod' => date($this->datetime_format, $page->date()),
+                        'longdate' => date('Y-m-d\TH:i:sP', $page->date()),
+                        'shortdate' => date('Y-m-d', $page->date()),
+                        'timestamp' => $page->date(),
+                        'rawroute' => $page->rawRoute(),
+                    ];
 
-                if ($this->include_change_freq) {
-                    $lang_route['changefreq'] = $header->sitemap['changefreq'] ?? $this->default_change_freq;
-                }
-                if ($this->include_priority) {
-                    $lang_route['priority']  = $header->sitemap['priority'] ?? $this->default_priority;
-                }
-
-                // optional add image
-                $images = $header->sitemap['images'] ?? $this->config->get('plugins.sitemap.images') ?? [];
-
-                if (isset($images)) {
-                    foreach ($images as $image => $values) {
-                        if (isset($values['loc'])) {
-                            $images[$image]['loc'] = $page->media()[$values['loc']]->url();
-                        } else {
-                            unset($images[$image]);
-                        }
+                    if ($this->include_change_freq) {
+                        $lang_route['changefreq'] = $header->sitemap['changefreq'] ?? $this->default_change_freq;
                     }
-                    $lang_route['images'] = $images;
+                    if ($this->include_priority) {
+                        $lang_route['priority']  = $header->sitemap['priority'] ?? $this->default_priority;
+                    }
+
+                    // optional add image
+                    $images = $header->sitemap['images'] ?? $this->config->get('plugins.sitemap.images') ?? [];
+
+                    if (isset($images)) {
+                        foreach ($images as $image => $values) {
+                            if (isset($values['loc'])) {
+                                $images[$image]['loc'] = $page->media()[$values['loc']]->url();
+                            } else {
+                                unset($images[$image]);
+                            }
+                        }
+                        $lang_route['images'] = $images;
+                    }
+
+                    $this->route_data[$rawroute][$lang] = $lang_route;
                 }
-
-
-
-                $this->route_data[$rawroute][$lang] = $lang_route;
             }
         }
     }
